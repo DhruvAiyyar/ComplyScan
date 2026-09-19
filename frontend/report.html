@@ -13,6 +13,33 @@
     <style>
 
         /* =========================
+           NAVBAR LOGO BADGE
+        ========================= */
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text, #111827);
+        }
+
+        .logo-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #f46b32;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 800;
+            border-radius: 8px;
+            user-select: none;
+        }
+
+        /* =========================
            CHATBOT
         ========================= */
 
@@ -227,11 +254,57 @@
         }
 
         .report-image img {
-            max-width: 180px;
-            max-height: 100px;
+            max-width: 260px;
+            max-height: 200px;
             object-fit: contain;
             border-radius: 8px;
             border: 1px solid var(--line);
+        }
+
+
+        /* =========================
+           SCANNED DETAIL IN RULE
+        ========================= */
+
+        .scanned-value-box {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--line, #e2e8f0);
+            border-left: 3px solid #f46b32;
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .scanned-label-tag {
+            font-weight: 700;
+            color: var(--text-muted, #64748b);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .scanned-value-text {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: var(--text, #0f172a);
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        body.dark .scanned-value-box,
+        body.dark-mode .scanned-value-box {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: #374151;
+            border-left-color: #f46b32;
+        }
+
+        body.dark .scanned-value-text,
+        body.dark-mode .scanned-value-text {
+            color: #f3f4f6;
         }
 
 
@@ -304,7 +377,8 @@
 
             .report-card {
                 padding: 12px !important;
-                margin-bottom: 0 !important;
+                margin-bottom: 10px !important;
+                page-break-inside: avoid;
             }
 
             .report-card h2 {
@@ -331,6 +405,10 @@
                 margin-top: 3px !important;
             }
 
+            #extractedDetails {
+                max-height: none !important;
+            }
+
             * {
                 box-shadow: none !important;
             }
@@ -355,6 +433,11 @@
                 bottom: 18px;
             }
 
+            .scanned-value-box {
+                flex-direction: column;
+                gap: 4px;
+            }
+
         }
 
     </style>
@@ -371,7 +454,8 @@
     <nav class="navbar">
 
         <div class="logo">
-            ComplyScan
+            <span class="logo-icon">C</span>
+            <span>ComplyScan</span>
         </div>
 
         <div class="nav-links">
@@ -498,9 +582,35 @@
             </section>
 
 
+            <!-- EXTRACTED FULL OCR DETAILS -->
+
+            <section class="report-card" style="margin-top: 24px;">
+
+                <h2>
+                    Scanned Label Details (OCR)
+                </h2>
+
+                <div id="extractedDetails" style="
+                    background: var(--surface-2, #f8fafc);
+                    border: 1px solid var(--line, #e2e8f0);
+                    border-radius: 12px;
+                    padding: 16px;
+                    max-height: 250px;
+                    overflow-y: auto;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                    font-size: 13px;
+                    line-height: 1.6;
+                    color: var(--text, #334155);
+                ">
+                    <!-- Extracted lines will be inserted here -->
+                </div>
+
+            </section>
+
+
             <!-- ACTION BUTTONS -->
 
-            <div class="actions">
+            <div class="actions" style="margin-top: 24px;">
 
                 <button
                     class="back-btn"
@@ -650,6 +760,19 @@
 
             reportId = getReportId();
 
+            // Check cached data from upload.js
+            const cachedData = sessionStorage.getItem("complyscan-result");
+            if (cachedData) {
+                try {
+                    const parsed = JSON.parse(cachedData);
+                    displayReport(parsed);
+                    loading.style.display = "none";
+                    reportContent.style.display = "block";
+                    return;
+                } catch (e) {
+                    console.warn("Could not parse sessionStorage scan result", e);
+                }
+            }
 
             if (!reportId) {
 
@@ -756,6 +879,11 @@
             const scannedImage =
                 document.getElementById(
                     "scannedImage"
+                );
+
+            const detailsElement =
+                document.getElementById(
+                    "extractedDetails"
                 );
 
 
@@ -866,75 +994,113 @@
                     </div>
                 `;
 
-                return;
+            } else {
+
+                rules.forEach(
+                    (rule) => {
+
+                        const ruleName =
+                            rule.rule ||
+                            rule.rule_name ||
+                            "Compliance Rule";
+
+
+                        const status =
+                            rule.status ||
+                            "Unknown";
+
+
+                        const detail =
+                            rule.detail ||
+                            rule.message ||
+                            rule.description ||
+                            "No additional details available.";
+
+
+                        const statusClass =
+                            getStatusClass(
+                                status
+                            );
+
+                        // Pure dynamic reading directly from the scan payload
+                        const scannedVal = rule.scanned_value || "Not Detected";
+
+
+                        const ruleElement =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        ruleElement.className =
+                            "rule";
+
+
+                        ruleElement.innerHTML = `
+
+                            <div class="rule-header">
+
+                                <div class="rule-name">
+                                    ${escapeHTML(ruleName)}
+                                </div>
+
+                                <div class="rule-status ${statusClass}">
+                                    ${escapeHTML(formatStatus(status))}
+                                </div>
+
+                            </div>
+
+                            <div class="rule-detail">
+                                ${escapeHTML(detail)}
+                            </div>
+
+                            <div class="scanned-value-box">
+                                <span class="scanned-label-tag">Detected OCR Value:</span>
+                                <span class="scanned-value-text">${escapeHTML(scannedVal)}</span>
+                            </div>
+
+                        `;
+
+
+                        resultsElement.appendChild(
+                            ruleElement
+                        );
+
+                    }
+                );
 
             }
 
 
-            rules.forEach(
-                (rule) => {
+            /* FULL SCANNED OCR DETAILS BOX */
 
-                    const ruleName =
-                        rule.rule ||
-                        rule.rule_name ||
-                        "Compliance Rule";
+            if (detailsElement) {
 
+                const textLines =
+                    data.extracted_text ||
+                    [];
 
-                    const status =
-                        rule.status ||
-                        "Unknown";
+                if (Array.isArray(textLines) && textLines.length > 0) {
 
-
-                    const detail =
-                        rule.detail ||
-                        rule.message ||
-                        rule.description ||
-                        "No additional details available.";
-
-
-                    const statusClass =
-                        getStatusClass(
-                            status
-                        );
-
-
-                    const ruleElement =
-                        document.createElement(
-                            "div"
-                        );
-
-
-                    ruleElement.className =
-                        "rule";
-
-
-                    ruleElement.innerHTML = `
-
-                        <div class="rule-header">
-
-                            <div class="rule-name">
-                                ${escapeHTML(ruleName)}
+                    detailsElement.innerHTML = textLines
+                        .map(line => `
+                            <div style="padding: 4px 0; border-bottom: 1px dashed var(--line, #e2e8f0);">
+                                ${escapeHTML(line)}
                             </div>
+                        `)
+                        .join("");
 
-                            <div class="rule-status ${statusClass}">
-                                ${escapeHTML(formatStatus(status))}
-                            </div>
+                } else {
 
+                    detailsElement.innerHTML = `
+                        <div style="color: #94a3b8; font-style: italic;">
+                            No raw text lines detected by OCR.
                         </div>
-
-                        <div class="rule-detail">
-                            ${escapeHTML(detail)}
-                        </div>
-
                     `;
 
-
-                    resultsElement.appendChild(
-                        ruleElement
-                    );
-
                 }
-            );
+
+            }
 
         }
 
@@ -1038,21 +1204,7 @@
 
         function downloadPDF() {
 
-            if (!reportId) {
-
-                alert(
-                    "Report ID is missing."
-                );
-
-                return;
-
-            }
-
-
-            window.open(
-                `${API_BASE}/api/report/${encodeURIComponent(reportId)}/pdf`,
-                "_blank"
-            );
+            window.print();
 
         }
 

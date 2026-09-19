@@ -11,6 +11,55 @@
 
     <style>
         /* =========================
+           TARGETED FIXES
+        ========================= */
+
+        /* 1. Fix "C" logo shape and alignment */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand .logo {
+            width: 34px;
+            height: 34px;
+            background: #ff6b35;
+            color: white;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* 2. Fix SCAN heading and description alignment */
+        .section-heading {
+            text-align: center;
+            margin: 40px auto 24px;
+            max-width: 600px;
+        }
+
+        .section-label {
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        /* 3. Fix browse button & text layout */
+        .drop-area .upload-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drop-area .browse-button {
+            display: inline-block;
+            margin: 10px 0 6px;
+        }
+
+        /* =========================
            CHATBOT
         ========================= */
 
