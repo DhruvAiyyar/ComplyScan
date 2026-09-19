@@ -4,6 +4,7 @@ from routes.scan import router as scan_router
 
 app = FastAPI(title="ComplyScan API")
 
+# Allow Live Server, localhost, and all origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,8 +13,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(scan_router)
+app.include_router(scan_router, prefix="/api")
 
 @app.get("/")
-def health():
-    return {"status": "running"}
+def root():
+    return {"message": "ComplyScan backend is running"}
