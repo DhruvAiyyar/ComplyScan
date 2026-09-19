@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ComplyScan - Report</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+
+        /* =========================
+           CHATBOT
+        ========================= */
+
+        .chatbot-toggle {
+            position: fixed;
+            right: 28px;
+            bottom: 28px;
+            width: 52px;
+            height: 52px;
+            border: none;
+            border-radius: 50%;
+            background: #f46b32;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+        }
+
+        .chatbot-toggle:hover {
+            transform: translateY(-2px);
+        }
+
+        .chatbot {
+            position: fixed;
+            right: 28px;
+            bottom: 92px;
+            width: 360px;
+            height: 500px;
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.20);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(15px);
+            transition: 0.25s ease;
+            z-index: 9998;
+        }
+
+        .chatbot.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .chatbot-header {
+            background: #f46b32;
+            color: white;
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .chatbot-header p {
+            margin: 4px 0 0;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .chatbot-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 25px;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 18px;
+            overflow-y: auto;
+            background: #ffffff;
+        }
+
+        .chat-message {
+            max-width: 85%;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .bot-message {
+            background: #f1f3f2;
+            color: #18201d;
+            align-self: flex-start;
+        }
+
+        .user-message {
+            background: #f46b32;
+            color: white;
+            margin-left: auto;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            border-top: 1px solid #e5e5e5;
+            background: #ffffff;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 11px 12px;
+            border: 1px solid #d5d5d5;
+            border-radius: 10px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .chat-input:focus {
+            border-color: #f46b32;
+        }
+
+        .chat-send {
+            padding: 0 16px;
+            border: none;
+            border-radius: 10px;
+            background: #f46b32;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+
+        /* =========================
+           DARK MODE CHATBOT
+        ========================= */
+
+        body.dark .chatbot,
+        body.dark-mode .chatbot {
+            background: #111827;
+        }
+
+        body.dark .chatbot-header,
+        body.dark-mode .chatbot-header {
+            background: #101820;
+            color: #ffffff;
+        }
+
+        body.dark .chatbot-header p,
+        body.dark-mode .chatbot-header p {
+            color: #d1d5db;
+        }
+
+        body.dark .chat-messages,
+        body.dark-mode .chat-messages {
+            background: #111827;
+        }
+
+        body.dark .bot-message,
+        body.dark-mode .bot-message {
+            background: #1f2937;
+            color: #f3f4f6;
+        }
+
+        body.dark .user-message,
+        body.dark-mode .user-message {
+            background: #101820;
+            color: #ffffff;
+        }
+
+        body.dark .chat-input-area,
+        body.dark-mode .chat-input-area {
+            background: #111827;
+            border-top: 1px solid #374151;
+        }
+
+        body.dark .chat-input,
+        body.dark-mode .chat-input {
+            background: #1f2937;
+            color: #ffffff;
+            border-color: #4b5563;
+        }
+
+        body.dark .chat-input::placeholder,
+        body.dark-mode .chat-input::placeholder {
+            color: #9ca3af;
+        }
+
+        body.dark .chat-send,
+        body.dark-mode .chat-send {
+            background: #101820;
+            color: #ffffff;
+        }
+
+        body.dark .chatbot-toggle,
+        body.dark-mode .chatbot-toggle {
+            background: #101820;
+            color: #ffffff;
+        }
+
+
+        /* =========================
+           REPORT IMAGE
+        ========================= */
+
+        .report-image {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .report-image img {
+            max-width: 180px;
+            max-height: 100px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+        }
+
+
+        /* =========================
+           PDF / PRINT LAYOUT
+        ========================= */
+
+        @media print {
+
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
+            .navbar,
+            .chatbot,
+            .chatbot-toggle,
+            .actions,
+            #loading,
+            #errorBox {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+                margin: 0;
+                padding: 0;
+            }
+
+            .container {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .page-title {
+                font-size: 24px !important;
+                margin-bottom: 4px !important;
+            }
+
+            .subtitle {
+                font-size: 12px !important;
+                margin-bottom: 8px !important;
+            }
+
+            .report-image {
+                margin-bottom: 8px !important;
+            }
+
+            .report-image img {
+                max-width: 160px !important;
+                max-height: 90px !important;
+            }
+
+            .status-card {
+                padding: 12px !important;
+                margin-bottom: 10px !important;
+                page-break-inside: avoid;
+            }
+
+            .status-card #overallStatus {
+                font-size: 24px !important;
+            }
+
+            .status-message {
+                font-size: 11px !important;
+            }
+
+            .report-card {
+                padding: 12px !important;
+                margin-bottom: 0 !important;
+            }
+
+            .report-card h2 {
+                font-size: 17px !important;
+                margin-bottom: 8px !important;
+            }
+
+            .rule {
+                padding: 8px 10px !important;
+                margin-bottom: 6px !important;
+                page-break-inside: avoid;
+            }
+
+            .rule-name {
+                font-size: 12px !important;
+            }
+
+            .rule-status {
+                font-size: 10px !important;
+            }
+
+            .rule-detail {
+                font-size: 10px !important;
+                margin-top: 3px !important;
+            }
+
+            * {
+                box-shadow: none !important;
+            }
+        }
+
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 600px) {
+
+            .chatbot {
+                right: 15px;
+                bottom: 80px;
+                width: calc(100% - 30px);
+                height: 480px;
+            }
+
+            .chatbot-toggle {
+                right: 18px;
+                bottom: 18px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <!-- =========================
+         NAVBAR
+    ========================= -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            ComplyScan
+        </div>
+
+        <div class="nav-links">
+
+            <a href="index.html">
+                Home
+            </a>
+
+            <a href="dashboard.html">
+                Dashboard
+            </a>
+
+            <button
+                id="themeToggle"
+                type="button"
+                aria-label="Toggle theme"
+                style="
+                    width:40px;
+                    height:40px;
+                    border:1px solid var(--line);
+                    border-radius:10px;
+                    background:var(--surface);
+                    color:var(--text);
+                    cursor:pointer;
+                    margin-left:10px;
+                "
+            >
+                ◐
+            </button>
+
+        </div>
+
+    </nav>
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================= -->
+
+    <main class="container">
+
+        <h1 class="page-title">
+            Compliance Report
+        </h1>
+
+        <p class="subtitle">
+            Detailed analysis of the scanned product label
+        </p>
+
+
+        <!-- LOADING -->
+
+        <div id="loading" class="loading">
+            Loading report...
+        </div>
+
+
+        <!-- ERROR -->
+
+        <div
+            id="errorBox"
+            class="error"
+            style="display: none;"
+        >
+            Unable to load the report.
+        </div>
+
+
+        <!-- REPORT -->
+
+        <div
+            id="reportContent"
+            style="display: none;"
+        >
+
+            <!-- PRODUCT IMAGE -->
+
+            <div class="report-image">
+
+                <img
+                    id="scannedImage"
+                    src=""
+                    alt="Scanned Product Label"
+                    style="display: none;"
+                >
+
+            </div>
+
+
+            <!-- OVERALL STATUS -->
+
+            <section class="status-card">
+
+                <div class="status-label">
+                    Overall Compliance Status
+                </div>
+
+                <div id="overallStatus">
+                    --
+                </div>
+
+                <div
+                    id="statusMessage"
+                    class="status-message"
+                >
+                    --
+                </div>
+
+            </section>
+
+
+            <!-- RULE RESULTS -->
+
+            <section class="report-card">
+
+                <h2>
+                    Rule-wise Results
+                </h2>
+
+                <div id="ruleResults">
+                    <!-- Rules will be inserted here -->
+                </div>
+
+            </section>
+
+
+            <!-- ACTION BUTTONS -->
+
+            <div class="actions">
+
+                <button
+                    class="back-btn"
+                    onclick="goBack()"
+                >
+                    ← Back
+                </button>
+
+                <button
+                    class="pdf-btn"
+                    onclick="downloadPDF()"
+                >
+                    Download PDF
+                </button>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- =========================
+         CHATBOT
+    ========================= -->
+
+    <button
+        class="chatbot-toggle"
+        id="chatbotToggle"
+        aria-label="Open ComplyScan Assistant"
+    >
+        💬
+    </button>
+
+
+    <div
+        class="chatbot"
+        id="chatbot"
+    >
+
+        <div class="chatbot-header">
+
+            <div>
+
+                <h3>
+                    ComplyScan Assistant
+                </h3>
+
+                <p>
+                    Ask me about compliance
+                </p>
+
+            </div>
+
+            <button
+                class="chatbot-close"
+                id="chatbotClose"
+                aria-label="Close chatbot"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            class="chat-messages"
+            id="chatMessages"
+        >
+
+            <div class="chat-message bot-message">
+
+                Hi! 👋 I'm the ComplyScan Assistant.
+                Ask me about scanning, OCR, compliance,
+                reports or the dashboard.
+
+            </div>
+
+        </div>
+
+
+        <div class="chat-input-area">
+
+            <input
+                type="text"
+                id="chatInput"
+                class="chat-input"
+                placeholder="Ask something..."
+                autocomplete="off"
+            >
+
+            <button
+                type="button"
+                id="chatSend"
+                class="chat-send"
+            >
+                Send
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         REPORT JAVASCRIPT
+    ========================= -->
+
+    <script>
+
+        const API_BASE = "http://127.0.0.1:8000";
+
+        let reportId = null;
+
+
+        /* =========================
+           GET REPORT ID
+        ========================= */
+
+        function getReportId() {
+
+            const params =
+                new URLSearchParams(
+                    window.location.search
+                );
+
+            return params.get("id");
+
+        }
+
+
+        /* =========================
+           LOAD REPORT
+        ========================= */
+
+        async function loadReport() {
+
+            const loading =
+                document.getElementById("loading");
+
+            const reportContent =
+                document.getElementById("reportContent");
+
+            const errorBox =
+                document.getElementById("errorBox");
+
+
+            reportId = getReportId();
+
+
+            if (!reportId) {
+
+                loading.style.display = "none";
+
+                errorBox.textContent =
+                    "No report ID was provided.";
+
+                errorBox.style.display = "block";
+
+                return;
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_BASE}/api/report/${encodeURIComponent(reportId)}`
+                    );
+
+
+                if (!response.ok) {
+
+                    let message =
+                        "Unable to load the report.";
+
+
+                    try {
+
+                        const errorData =
+                            await response.json();
+
+
+                        if (errorData.detail) {
+
+                            message =
+                                errorData.detail;
+
+                        }
+
+                    } catch (error) {}
+
+
+                    throw new Error(message);
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                displayReport(data);
+
+
+                loading.style.display = "none";
+
+                reportContent.style.display = "block";
+
+
+            } catch (error) {
+
+                console.error(error);
+
+
+                loading.style.display = "none";
+
+
+                errorBox.textContent =
+                    error.message ||
+                    "Unable to load the report.";
+
+
+                errorBox.style.display =
+                    "block";
+
+            }
+
+        }
+
+
+        /* =========================
+           DISPLAY REPORT
+        ========================= */
+
+        function displayReport(data) {
+
+            const statusElement =
+                document.getElementById(
+                    "overallStatus"
+                );
+
+            const messageElement =
+                document.getElementById(
+                    "statusMessage"
+                );
+
+            const resultsElement =
+                document.getElementById(
+                    "ruleResults"
+                );
+
+            const scannedImage =
+                document.getElementById(
+                    "scannedImage"
+                );
+
+
+            /* PRODUCT IMAGE */
+
+            if (data.image_url) {
+
+                scannedImage.src =
+                    data.image_url.startsWith("http")
+                        ? data.image_url
+                        : `${API_BASE}${data.image_url}`;
+
+                scannedImage.style.display =
+                    "block";
+
+            } else {
+
+                scannedImage.style.display =
+                    "none";
+
+            }
+
+
+            /* OVERALL STATUS */
+
+            const overallStatus =
+                data.overall_status ||
+                data.status ||
+                "Unknown";
+
+
+            statusElement.innerText =
+                formatStatus(
+                    overallStatus
+                );
+
+
+            statusElement.className = "";
+
+
+            if (
+                overallStatus
+                    .toLowerCase()
+                    .includes("compliant") &&
+                !overallStatus
+                    .toLowerCase()
+                    .includes("non")
+            ) {
+
+                statusElement.classList.add(
+                    "compliant"
+                );
+
+
+                messageElement.innerText =
+                    "The product label passed the compliance checks.";
+
+            }
+
+            else if (
+                overallStatus
+                    .toLowerCase()
+                    .includes("non")
+            ) {
+
+                statusElement.classList.add(
+                    "non-compliant"
+                );
+
+
+                messageElement.innerText =
+                    "One or more compliance requirements were not satisfied.";
+
+            }
+
+            else {
+
+                statusElement.classList.add(
+                    "unknown"
+                );
+
+
+                messageElement.innerText =
+                    "The compliance status could not be determined.";
+
+            }
+
+
+            /* RULE RESULTS */
+
+            const rules =
+                data.rule_results ||
+                data.rules ||
+                [];
+
+
+            resultsElement.innerHTML = "";
+
+
+            if (
+                !Array.isArray(rules) ||
+                rules.length === 0
+            ) {
+
+                resultsElement.innerHTML = `
+                    <div class="empty">
+                        No rule-wise results are available.
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            rules.forEach(
+                (rule) => {
+
+                    const ruleName =
+                        rule.rule ||
+                        rule.rule_name ||
+                        "Compliance Rule";
+
+
+                    const status =
+                        rule.status ||
+                        "Unknown";
+
+
+                    const detail =
+                        rule.detail ||
+                        rule.message ||
+                        rule.description ||
+                        "No additional details available.";
+
+
+                    const statusClass =
+                        getStatusClass(
+                            status
+                        );
+
+
+                    const ruleElement =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    ruleElement.className =
+                        "rule";
+
+
+                    ruleElement.innerHTML = `
+
+                        <div class="rule-header">
+
+                            <div class="rule-name">
+                                ${escapeHTML(ruleName)}
+                            </div>
+
+                            <div class="rule-status ${statusClass}">
+                                ${escapeHTML(formatStatus(status))}
+                            </div>
+
+                        </div>
+
+                        <div class="rule-detail">
+                            ${escapeHTML(detail)}
+                        </div>
+
+                    `;
+
+
+                    resultsElement.appendChild(
+                        ruleElement
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =========================
+           FORMAT STATUS
+        ========================= */
+
+        function formatStatus(status) {
+
+            if (!status) {
+
+                return "Unknown";
+
+            }
+
+
+            return String(status)
+                .replace(/_/g, " ")
+                .replace(
+                    /\b\w/g,
+                    letter =>
+                        letter.toUpperCase()
+                );
+
+        }
+
+
+        /* =========================
+           STATUS CLASS
+        ========================= */
+
+        function getStatusClass(status) {
+
+            const value =
+                String(status).toLowerCase();
+
+
+            if (
+                value.includes("pass") ||
+                value.includes("compliant") ||
+                value.includes("success")
+            ) {
+
+                return "pass";
+
+            }
+
+
+            if (
+                value.includes("fail") ||
+                value.includes("violation") ||
+                value.includes("non-compliant") ||
+                value.includes("non compliant")
+            ) {
+
+                return "fail";
+
+            }
+
+
+            if (
+                value.includes("warning") ||
+                value.includes("pending")
+            ) {
+
+                return "warning";
+
+            }
+
+
+            return "default";
+
+        }
+
+
+        /* =========================
+           ESCAPE HTML
+        ========================= */
+
+        function escapeHTML(value) {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.textContent =
+                String(value);
+
+
+            return div.innerHTML;
+
+        }
+
+
+        /* =========================
+           DOWNLOAD PDF
+        ========================= */
+
+        function downloadPDF() {
+
+            if (!reportId) {
+
+                alert(
+                    "Report ID is missing."
+                );
+
+                return;
+
+            }
+
+
+            window.open(
+                `${API_BASE}/api/report/${encodeURIComponent(reportId)}/pdf`,
+                "_blank"
+            );
+
+        }
+
+
+        /* =========================
+           BACK BUTTON
+        ========================= */
+
+        function goBack() {
+
+            window.history.back();
+
+        }
+
+
+        /* =========================
+           THEME
+        ========================= */
+
+        const themeToggle =
+            document.getElementById(
+                "themeToggle"
+            );
+
+
+        function applyTheme(theme) {
+
+            if (theme === "dark") {
+
+                document.body.classList.add(
+                    "dark"
+                );
+
+                document.body.classList.add(
+                    "dark-mode"
+                );
+
+                themeToggle.innerText =
+                    "☀";
+
+            }
+
+            else {
+
+                document.body.classList.remove(
+                    "dark"
+                );
+
+                document.body.classList.remove(
+                    "dark-mode"
+                );
+
+                themeToggle.innerText =
+                    "◐";
+
+            }
+
+        }
+
+
+        const savedTheme =
+            localStorage.getItem(
+                "complyscan-theme"
+            );
+
+
+        if (savedTheme === "dark") {
+
+            applyTheme("dark");
+
+        }
+
+        else {
+
+            applyTheme("light");
+
+        }
+
+
+        themeToggle.addEventListener(
+            "click",
+            () => {
+
+                const isDark =
+                    document.body.classList.contains(
+                        "dark"
+                    );
+
+
+                if (isDark) {
+
+                    localStorage.setItem(
+                        "complyscan-theme",
+                        "light"
+                    );
+
+                    applyTheme(
+                        "light"
+                    );
+
+                }
+
+                else {
+
+                    localStorage.setItem(
+                        "complyscan-theme",
+                        "dark"
+                    );
+
+                    applyTheme(
+                        "dark"
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =========================
+           CHATBOT
+        ========================= */
+
+        const chatbotToggle =
+            document.getElementById(
+                "chatbotToggle"
+            );
+
+        const chatbot =
+            document.getElementById(
+                "chatbot"
+            );
+
+        const chatbotClose =
+            document.getElementById(
+                "chatbotClose"
+            );
+
+        const chatMessages =
+            document.getElementById(
+                "chatMessages"
+            );
+
+        const chatInput =
+            document.getElementById(
+                "chatInput"
+            );
+
+        const chatSend =
+            document.getElementById(
+                "chatSend"
+            );
+
+
+        chatbotToggle.addEventListener(
+            "click",
+            () => {
+
+                chatbot.classList.toggle(
+                    "active"
+                );
+
+
+                if (
+                    chatbot.classList.contains(
+                        "active"
+                    )
+                ) {
+
+                    chatInput.focus();
+
+                }
+
+            }
+        );
+
+
+        chatbotClose.addEventListener(
+            "click",
+            () => {
+
+                chatbot.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+        function addMessage(
+            message,
+            type
+        ) {
+
+            const messageElement =
+                document.createElement(
+                    "div"
+                );
+
+
+            messageElement.className =
+                `chat-message ${type}-message`;
+
+
+            messageElement.innerText =
+                message;
+
+
+            chatMessages.appendChild(
+                messageElement
+            );
+
+
+            chatMessages.scrollTop =
+                chatMessages.scrollHeight;
+
+        }
+
+
+        function getBotResponse(
+            message
+        ) {
+
+            const text =
+                message
+                    .toLowerCase()
+                    .trim();
+
+
+            if (
+                text.includes("ocr") ||
+                text.includes("read") ||
+                text.includes("text")
+            ) {
+
+                return "ComplyScan uses OCR to extract text from the uploaded product label and use that information for compliance checking.";
+
+            }
+
+
+            if (
+                text.includes("mrp") ||
+                text.includes("price")
+            ) {
+
+                return "MRP is one of the important declarations checked during label compliance analysis.";
+
+            }
+
+
+            if (
+                text.includes("quantity") ||
+                text.includes("net quantity") ||
+                text.includes("weight")
+            ) {
+
+                return "Net quantity is checked as part of the required product declarations on the label.";
+
+            }
+
+
+            if (
+                text.includes("compliance") ||
+                text.includes("compliant") ||
+                text.includes("rule")
+            ) {
+
+                return "ComplyScan compares extracted label information with configured compliance rules and generates a rule-wise result.";
+
+            }
+
+
+            if (
+                text.includes("scan") ||
+                text.includes("upload") ||
+                text.includes("image")
+            ) {
+
+                return "To scan a label, upload a clear product-label image in the scanner section and click 'Upload & Scan'.";
+
+            }
+
+
+            if (
+                text.includes("dashboard") ||
+                text.includes("history") ||
+                text.includes("previous scan")
+            ) {
+
+                return "The dashboard shows total scans, compliant scans, non-compliant scans, violation breakdowns and recent scan history.";
+
+            }
+
+
+            if (
+                text.includes("report") ||
+                text.includes("result")
+            ) {
+
+                return "This report page shows the overall compliance status and rule-wise results of your scanned label.";
+
+            }
+
+
+            if (
+                text.includes("qr") ||
+                text.includes("barcode")
+            ) {
+
+                return "QR-based declaration extraction can be added as a future extension to complement the current physical-label OCR pipeline.";
+
+            }
+
+
+            if (
+                text === "hi" ||
+                text === "hello" ||
+                text === "hey"
+            ) {
+
+                return "Hi! 👋 I'm the ComplyScan Assistant. Ask me about scanning, OCR, compliance, reports, MRP, quantity or the dashboard.";
+
+            }
+
+
+            if (
+                text.includes("help") ||
+                text.includes("what can you do")
+            ) {
+
+                return "I can explain ComplyScan's scanning process, OCR, compliance checks, reports, dashboard, MRP and quantity declarations.";
+
+            }
+
+
+            return "I'm currently a demo assistant. Try asking about OCR, MRP, quantity, compliance, scanning, reports or the dashboard.";
+
+        }
+
+
+        function sendMessage() {
+
+            const message =
+                chatInput.value.trim();
+
+
+            if (!message) {
+
+                return;
+
+            }
+
+
+            addMessage(
+                message,
+                "user"
+            );
+
+
+            chatInput.value = "";
+
+
+            setTimeout(
+                () => {
+
+                    const response =
+                        getBotResponse(
+                            message
+                        );
+
+
+                    addMessage(
+                        response,
+                        "bot"
+                    );
+
+                },
+                400
+            );
+
+        }
+
+
+        chatSend.addEventListener(
+            "click",
+            sendMessage
+        );
+
+
+        chatInput.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (
+                    event.key === "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    sendMessage();
+
+                }
+
+            }
+        );
+
+
+        /* =========================
+           START REPORT
+        ========================= */
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            loadReport
+        );
+
+    </script>
+
+</body>
+
+</html>

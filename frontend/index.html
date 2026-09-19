@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ComplyScan - Label Compliance Checker</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* =========================
+           CHATBOT
+        ========================= */
+
+        .chatbot-toggle {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 58px;
+            height: 58px;
+            border: none;
+            border-radius: 50%;
+            background: #111827;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .chatbot {
+            position: fixed;
+            right: 24px;
+            bottom: 94px;
+            width: 350px;
+            max-width: calc(100vw - 32px);
+            height: 480px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+            z-index: 999;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chatbot.active {
+            display: flex;
+        }
+
+        .chatbot-header {
+            padding: 16px;
+            background: #111827;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chatbot-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .chatbot-header p {
+            margin: 3px 0 0;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .chatbot-close {
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        .chat-message {
+            max-width: 82%;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .bot-message {
+            background: white;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+            margin-right: auto;
+        }
+
+        .user-message {
+            background: #111827;
+            color: white;
+            margin-left: auto;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 10px;
+            gap: 8px;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+        }
+
+        .chat-input {
+            flex: 1;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 10px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .chat-send {
+            border: none;
+            border-radius: 10px;
+            padding: 0 15px;
+            background: #111827;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* =========================
+           CHATBOT THEME
+        ========================= */
+
+        body:not(.dark):not(.dark-mode) .chatbot-toggle {
+            background: var(--orange) !important;
+        }
+
+        body:not(.dark):not(.dark-mode) .chatbot {
+            background: var(--surface) !important;
+            border-color: var(--line) !important;
+        }
+
+        body:not(.dark):not(.dark-mode) .chatbot-header {
+            background: var(--orange) !important;
+            color: white !important;
+        }
+
+        body:not(.dark):not(.dark-mode) .chat-messages {
+            background: var(--surface-2) !important;
+        }
+
+        body:not(.dark):not(.dark-mode) .bot-message {
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            border-color: var(--line) !important;
+        }
+
+        body:not(.dark):not(.dark-mode) .user-message {
+            background: var(--orange) !important;
+            color: white !important;
+        }
+
+        body:not(.dark):not(.dark-mode) .chat-input-area {
+            background: var(--surface) !important;
+            border-color: var(--line) !important;
+        }
+
+        body:not(.dark):not(.dark-mode) .chat-input {
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            border-color: var(--line) !important;
+        }
+
+        body:not(.dark):not(.dark-mode) .chat-send {
+            background: var(--orange) !important;
+            color: white !important;
+        }
+
+        /* DARK MODE */
+
+        body.dark .chatbot-toggle,
+        body.dark-mode .chatbot-toggle {
+            background: #111827 !important;
+        }
+
+        body.dark .chatbot,
+        body.dark-mode .chatbot {
+            background: #1f2937 !important;
+            border-color: #374151 !important;
+        }
+
+        body.dark .chatbot-header,
+        body.dark-mode .chatbot-header {
+            background: #111827 !important;
+        }
+
+        body.dark .chat-messages,
+        body.dark-mode .chat-messages {
+            background: #111827 !important;
+        }
+
+        body.dark .bot-message,
+        body.dark-mode .bot-message {
+            background: #1f2937 !important;
+            color: #f9fafb !important;
+            border-color: #374151 !important;
+        }
+
+        body.dark .user-message,
+        body.dark-mode .user-message {
+            background: #111827 !important;
+            color: white !important;
+        }
+
+        body.dark .chat-input-area,
+        body.dark-mode .chat-input-area {
+            background: #1f2937 !important;
+            border-color: #374151 !important;
+        }
+
+        body.dark .chat-input,
+        body.dark-mode .chat-input {
+            background: #111827 !important;
+            color: white !important;
+            border-color: #4b5563 !important;
+        }
+
+        body.dark .chat-send,
+        body.dark-mode .chat-send {
+            background: #111827 !important;
+            color: white !important;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 500px) {
+            .chatbot {
+                right: 16px;
+                bottom: 88px;
+                width: calc(100vw - 32px);
+                height: 450px;
+            }
+
+            .chatbot-toggle {
+                right: 16px;
+                bottom: 16px;
+            }
+        }
+
+        /* =========================
+           BROWSE BUTTON
+        ========================= */
+
+        .browse-button {
+            display: inline-block;
+            margin: 8px 0 12px;
+            padding: 8px 18px;
+            border-radius: 8px;
+            background: var(--orange);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .browse-button:hover {
+            background: var(--orange-dark);
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- =========================
+         NAVBAR
+    ========================== -->
+
+    <header class="navbar">
+
+        <div class="brand">
+            <div class="logo">C</div>
+            <span>ComplyScan</span>
+        </div>
+
+        <nav class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="dashboard.html">Dashboard</a>
+        </nav>
+
+        <div class="nav-actions">
+
+            <button class="theme-toggle" id="themeToggle" type="button">
+                🌙
+            </button>
+
+            <a href="#scanner" class="btn btn-primary">
+                Start Scan
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================
+         HERO
+    ========================== -->
+
+    <main>
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <span class="hero-badge">
+                    AI-Powered Label Compliance
+                </span>
+
+                <h1>
+                    Check the label.<br>
+                    Catch the violation.
+                </h1>
+
+                <p>
+                    ComplyScan uses OCR and compliance rules to analyze
+                    product labels and identify missing or incorrect
+                    declarations.
+                </p>
+
+                <div class="hero-actions">
+
+                    <a href="#scanner" class="btn btn-primary">
+                        Scan a Label
+                    </a>
+
+                    <a href="#how-it-works" class="btn btn-secondary">
+                        How it works
+                    </a>
+
+                </div>
+
+                <div class="hero-stats">
+
+                    <div>
+                        <strong>OCR</strong>
+                        <span>Text Extraction</span>
+                    </div>
+
+                    <div>
+                        <strong>Rules</strong>
+                        <span>Compliance Check</span>
+                    </div>
+
+                    <div>
+                        <strong>Report</strong>
+                        <span>Clear Results</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="hero-visual">
+
+                <div class="product-label-card">
+
+                    <div class="label-top">
+                        PRODUCT LABEL
+                    </div>
+
+                    <div class="label-product">
+                        Sample Product
+                    </div>
+
+                    <div class="label-details">
+                        <span>Net Quantity</span>
+                        <strong>500 g</strong>
+                    </div>
+
+                    <div class="label-details">
+                        <span>MRP</span>
+                        <strong>₹199</strong>
+                    </div>
+
+                    <div class="label-details">
+                        <span>Manufactured</span>
+                        <strong>08/2026</strong>
+                    </div>
+
+                    <div class="label-status">
+                        ✓ Compliance Check
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             SCANNER
+        ========================== -->
+
+        <section class="scanner-section" id="scanner">
+
+            <div class="section-heading">
+
+                <span class="section-label">
+                    SCAN
+                </span>
+
+                <h2>
+                    Upload your product label
+                </h2>
+
+                <p>
+                    Upload a clear image of the physical product label
+                    and let ComplyScan analyze it.
+                </p>
+
+            </div>
+
+
+            <div class="scanner-card">
+
+                <form id="scanForm">
+
+                    <div class="drop-area" id="dropArea">
+
+                        <input
+                            type="file"
+                            id="labelImage"
+                            name="labelImage"
+                            accept="image/*"
+                            hidden
+                        >
+
+                        <div class="upload-content">
+
+                            <div class="upload-icon">
+                                ↑
+                            </div>
+
+                            <h3>
+                                Drop your label image here
+                            </h3>
+
+                            <p>
+                                or click to browse from your device
+                            </p>
+
+                            <!-- BROWSE BUTTON -->
+                            <label
+                                for="labelImage"
+                                class="browse-button"
+                            >
+                                Browse
+                            </label>
+
+                            <span>
+                                JPG, JPEG, PNG
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PREVIEW -->
+
+                    <div
+                        class="preview-container"
+                        id="previewContainer"
+                        style="display: none;"
+                    >
+
+                        <img
+                            id="previewImage"
+                            src=""
+                            alt="Label preview"
+                        >
+
+                        <button
+                            type="button"
+                            id="removeImage"
+                            class="btn btn-secondary"
+                        >
+                            Remove
+                        </button>
+
+                    </div>
+
+
+                    <!-- ERROR -->
+
+                    <div
+                        id="errorMessage"
+                        class="error-message"
+                        style="display: none;"
+                    ></div>
+
+
+                    <!-- LOADING -->
+
+                    <div
+                        id="loadingMessage"
+                        class="loading"
+                        style="display: none;"
+                    >
+
+                        <p>
+                            Analyzing your label...
+                        </p>
+
+                    </div>
+
+
+                    <!-- SCAN BUTTON -->
+
+                    <button
+                        type="submit"
+                        id="scanButton"
+                        class="btn btn-primary scan-button"
+                    >
+                        Scan Label
+                    </button>
+
+                </form>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             FEATURES
+        ========================== -->
+
+        <section class="features-section" id="features">
+
+            <div class="section-heading">
+
+                <span class="section-label">
+                    FEATURES
+                </span>
+
+                <h2>
+                    Compliance checking, simplified
+                </h2>
+
+            </div>
+
+
+            <div class="features-grid">
+
+                <div class="feature-card">
+
+                    <div class="feature-icon">
+                        OCR
+                    </div>
+
+                    <h3>
+                        Smart OCR
+                    </h3>
+
+                    <p>
+                        Extract important information directly from
+                        physical product labels.
+                    </p>
+
+                </div>
+
+
+                <div class="feature-card">
+
+                    <div class="feature-icon">
+                        ✓
+                    </div>
+
+                    <h3>
+                        Compliance Rules
+                    </h3>
+
+                    <p>
+                        Compare extracted declarations against
+                        predefined compliance requirements.
+                    </p>
+
+                </div>
+
+
+                <div class="feature-card">
+
+                    <div class="feature-icon">
+                        !
+                    </div>
+
+                    <h3>
+                        Understand the Result
+                    </h3>
+
+                    <p>
+                        Get clear information about which declarations
+                        passed or failed the compliance check.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             HOW IT WORKS
+        ========================== -->
+
+        <section class="how-it-works" id="how-it-works">
+
+            <div class="section-heading">
+
+                <span class="section-label">
+                    HOW IT WORKS
+                </span>
+
+                <h2>
+                    Three simple steps
+                </h2>
+
+            </div>
+
+
+            <div class="steps-grid">
+
+                <div class="step">
+
+                    <div class="step-number">
+                        01
+                    </div>
+
+                    <h3>
+                        Upload
+                    </h3>
+
+                    <p>
+                        Upload a clear image of the product label.
+                    </p>
+
+                </div>
+
+
+                <div class="step">
+
+                    <div class="step-number">
+                        02
+                    </div>
+
+                    <h3>
+                        Analyze
+                    </h3>
+
+                    <p>
+                        OCR extracts the label information and the
+                        compliance engine checks the declarations.
+                    </p>
+
+                </div>
+
+
+                <div class="step">
+
+                    <div class="step-number">
+                        03
+                    </div>
+
+                    <h3>
+                        Report
+                    </h3>
+
+                    <p>
+                        View the compliance result and understand
+                        the detected issues.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             CTA
+        ========================== -->
+
+        <section class="cta-section">
+
+            <div>
+
+                <h2>
+                    Ready to check a label?
+                </h2>
+
+                <p>
+                    Upload your product label and start the compliance
+                    analysis.
+                </p>
+
+            </div>
+
+            <a href="#scanner" class="btn btn-primary">
+                Start Scan
+            </a>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+
+    <footer class="footer">
+
+        <div>
+
+            <strong>
+                ComplyScan
+            </strong>
+
+            <p>
+                AI-powered product label compliance checking.
+            </p>
+
+        </div>
+
+        <div>
+            © 2026 ComplyScan
+        </div>
+
+    </footer>
+
+
+    <!-- =========================
+         CHATBOT BUTTON
+    ========================== -->
+
+    <button
+        class="chatbot-toggle"
+        id="chatbotToggle"
+        type="button"
+        aria-label="Open chatbot"
+    >
+        💬
+    </button>
+
+
+    <!-- =========================
+         CHATBOT
+    ========================== -->
+
+    <div
+        class="chatbot"
+        id="chatbot"
+    >
+
+        <div class="chatbot-header">
+
+            <div>
+
+                <h3>
+                    ComplyScan Assistant
+                </h3>
+
+                <p>
+                    Ask about label compliance
+                </p>
+
+            </div>
+
+            <button
+                class="chatbot-close"
+                id="chatbotClose"
+                type="button"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            class="chat-messages"
+            id="chatMessages"
+        >
+
+            <div class="chat-message bot-message">
+
+                Hi! 👋 I'm the ComplyScan Assistant.
+                You can ask me about product label compliance,
+                required declarations, OCR or scan results.
+
+            </div>
+
+        </div>
+
+
+        <div class="chat-input-area">
+
+            <input
+                type="text"
+                id="chatInput"
+                class="chat-input"
+                placeholder="Ask something..."
+                autocomplete="off"
+            >
+
+            <button
+                type="button"
+                id="chatSend"
+                class="chat-send"
+            >
+                Send
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         UPLOAD JS
+    ========================== -->
+
+    <script src="upload.js"></script>
+
+
+    <!-- =========================
+         THEME + CHATBOT JS
+    ========================== -->
+
+    <script>
+
+        /* =========================
+           THEME
+        ========================= */
+
+        const themeToggle =
+            document.getElementById("themeToggle");
+
+        const savedTheme =
+            localStorage.getItem("complyscan-theme");
+
+        if (savedTheme === "dark") {
+
+            document.body.classList.add("dark");
+
+            themeToggle.textContent = "☀️";
+
+        }
+
+
+        themeToggle.addEventListener("click", () => {
+
+            document.body.classList.toggle("dark");
+
+            const isDark =
+                document.body.classList.contains("dark");
+
+            localStorage.setItem(
+                "complyscan-theme",
+                isDark ? "dark" : "light"
+            );
+
+            themeToggle.textContent =
+                isDark ? "☀️" : "🌙";
+
+        });
+
+
+        /* =========================
+           CHATBOT
+        ========================= */
+
+        const chatbotToggle =
+            document.getElementById("chatbotToggle");
+
+        const chatbot =
+            document.getElementById("chatbot");
+
+        const chatbotClose =
+            document.getElementById("chatbotClose");
+
+        const chatInput =
+            document.getElementById("chatInput");
+
+        const chatSend =
+            document.getElementById("chatSend");
+
+        const chatMessages =
+            document.getElementById("chatMessages");
+
+
+        chatbotToggle.addEventListener("click", () => {
+
+            chatbot.classList.toggle("active");
+
+            if (chatbot.classList.contains("active")) {
+                chatInput.focus();
+            }
+
+        });
+
+
+        chatbotClose.addEventListener("click", () => {
+
+            chatbot.classList.remove("active");
+
+        });
+
+
+        function addMessage(message, type) {
+
+            const div =
+                document.createElement("div");
+
+            div.classList.add(
+                "chat-message",
+                type === "user"
+                    ? "user-message"
+                    : "bot-message"
+            );
+
+            div.textContent = message;
+
+            chatMessages.appendChild(div);
+
+            chatMessages.scrollTop =
+                chatMessages.scrollHeight;
+
+        }
+
+
+        function getBotResponse(message) {
+
+            const text =
+                message.toLowerCase();
+
+
+            if (
+                text.includes("ocr") ||
+                text.includes("text extraction")
+            ) {
+
+                return "OCR extracts text and important declarations from the product label image so they can be checked against compliance rules.";
+
+            }
+
+
+            if (
+                text.includes("mrp") ||
+                text.includes("price")
+            ) {
+
+                return "MRP is one of the important declarations that can be checked as part of the label compliance process.";
+
+            }
+
+
+            if (
+                text.includes("quantity") ||
+                text.includes("net quantity")
+            ) {
+
+                return "Net quantity is an important product declaration. ComplyScan can extract it from the label and check it against the applicable rules.";
+
+            }
+
+
+            if (
+                text.includes("compliance") ||
+                text.includes("compliant")
+            ) {
+
+                return "ComplyScan analyzes the extracted label information and compares it with the applicable compliance rules to generate a result.";
+
+            }
+
+
+            if (
+                text.includes("scan") ||
+                text.includes("upload")
+            ) {
+
+                return "To scan a label, upload a clear product-label image in the scanner section and click 'Scan Label'.";
+
+            }
+
+
+            if (
+                text.includes("dashboard")
+            ) {
+
+                return "The dashboard shows scan statistics, compliance results, violation breakdowns and recent scans.";
+
+            }
+
+
+            if (
+                text.includes("hello") ||
+                text.includes("hi") ||
+                text.includes("hey")
+            ) {
+
+                return "Hi! 👋 How can I help you with ComplyScan?";
+
+            }
+
+
+            return "I can help with ComplyScan, label compliance, OCR, scanning, MRP, net quantity and dashboard-related questions.";
+
+        }
+
+
+        function sendMessage() {
+
+            const message =
+                chatInput.value.trim();
+
+            if (!message) {
+                return;
+            }
+
+            addMessage(
+                message,
+                "user"
+            );
+
+            chatInput.value = "";
+
+
+            setTimeout(() => {
+
+                const response =
+                    getBotResponse(message);
+
+                addMessage(
+                    response,
+                    "bot"
+                );
+
+            }, 400);
+
+        }
+
+
+        chatSend.addEventListener(
+            "click",
+            sendMessage
+        );
+
+
+        chatInput.addEventListener(
+            "keydown",
+            (event) => {
+
+                if (event.key === "Enter") {
+                    sendMessage();
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>
