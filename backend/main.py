@@ -1,20 +1,39 @@
+"""
+ComplyScan - FastAPI Application
+"""
+
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from routes.scan import router as scan_router
 
-app = FastAPI(title="ComplyScan API")
+from database import create_tables
+from routes.scans import router as scans_router
+from routes.dashboard import router as dashboard_router
+from routes.reports import router as reports_router
 
-# Allow Live Server, localhost, and all origins
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+# Create FastAPI application.
+app = FastAPI(
+    title="ComplyScan API",
+    description="Packaged Commodity Label Compliance Checker",
+    version="1.0"
 )
 
-app.include_router(scan_router, prefix="/api")
+
+# Make sure database tables exist.
+create_tables()
+
+
+# Register scan routes.
+app.include_router(scans_router)
+
+# Register dashboard routes.
+app.include_router(dashboard_router)
+
+app.include_router(reports_router)
 
 @app.get("/")
 def root():
-    return {"message": "ComplyScan backend is running"}
+    """
+    Simple health-check endpoint.
+    """
+    return {
+        "message": "ComplyScan backend is running"
+    }
